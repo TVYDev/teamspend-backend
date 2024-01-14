@@ -1,3 +1,3 @@
 module.exports = {
-  './src/**/*.{js,ts}': ['pnpm lint', 'pnpm fomat'],
+  './src/**/*.{js,ts}': ['pnpm lint', 'pnpm format'],
 };
