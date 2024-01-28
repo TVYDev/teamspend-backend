@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HttpExceptionFilter } from './http-exception.filter';
 import { LoggingInterceptor } from './logger.interceptor';
+import { ResponseTransformInterceptor } from './response-transform.interceptor';
 
 @Module({
   imports: [],
@@ -17,6 +18,10 @@ import { LoggingInterceptor } from './logger.interceptor';
     {
       provide: 'APP_INTERCEPTOR',
       useClass: LoggingInterceptor,
+    },
+    {
+      provide: 'APP_INTERCEPTOR',
+      useClass: ResponseTransformInterceptor,
     },
   ],
 })

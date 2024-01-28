@@ -18,7 +18,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
      * TODO: Dynamic code and trace_id
      */
     response.status(status).json({
-      code: 'E001',
+      code: 'E_001',
       message: exception.message,
       timestamp: new Date().getTime(),
       trace_id: 'TRACE_ID',
