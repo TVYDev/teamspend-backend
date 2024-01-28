@@ -5,6 +5,7 @@ import {
   Catch,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
+import { StandardResponse } from './response-transform.interceptor';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -20,8 +21,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     response.status(status).json({
       code: 'E_001',
       message: exception.message,
+      data: null,
       timestamp: new Date().getTime(),
       trace_id: 'TRACE_ID',
-    });
+    } satisfies StandardResponse<null>);
   }
 }
