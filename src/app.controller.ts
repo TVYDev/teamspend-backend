@@ -6,7 +6,12 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  async getHello(): Promise<string> {
+    /** TESTING Timeout response */
+    return new Promise((resolve, _reject) => {
+      setTimeout(() => {
+        resolve(this.appService.getHello());
+      }, 2000);
+    });
   }
 }

@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { HttpExceptionFilter } from './http-exception.filter';
 import { LoggingInterceptor } from './logger.interceptor';
 import { ResponseTransformInterceptor } from './response-transform.interceptor';
+import { TimeoutInterceptor } from './timeout.interceptor';
 
 @Module({
   imports: [],
@@ -22,6 +23,10 @@ import { ResponseTransformInterceptor } from './response-transform.interceptor';
     {
       provide: 'APP_INTERCEPTOR',
       useClass: ResponseTransformInterceptor,
+    },
+    {
+      provide: 'APP_INTERCEPTOR',
+      useClass: TimeoutInterceptor,
     },
   ],
 })
