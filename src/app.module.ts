@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import * as Joi from 'joi';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -8,7 +10,24 @@ import { ResponseTransformInterceptor } from './response-transform.interceptor';
 import { TimeoutInterceptor } from './timeout.interceptor';
 
 @Module({
-  imports: [],
+  imports: [
+    ConfigModule.forRoot({
+      cache: true,
+      expandVariables: true,
+      validationSchema: Joi.object({
+        NODE_ENV: Joi.string()
+          .valid('sit', 'uat', 'production', 'test')
+          .default('sit'),
+        PORT: Joi.number().port().default(3000),
+      }),
+      validationOptions: {
+        abortEarly: true,
+        allowUnknown: true,
+        convert: true,
+        presence: 'required',
+      },
+    }),
+  ],
   controllers: [AppController],
   providers: [
     AppService,
