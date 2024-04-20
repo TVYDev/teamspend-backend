@@ -1,13 +1,24 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
+
+import { User as UserModel } from '@prisma/client';
 import { AppService } from './app.service';
+import { UsersService } from './users/users.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly usersService: UsersService
+  ) {}
 
   @Get()
   async getHello(): Promise<string> {
     return this.appService.getHello();
+  }
+
+  @Get('users/:id')
+  async getUser(@Param('id') id: string): Promise<UserModel | null> {
+    return this.usersService.findUser(Number(id));
   }
 
   @Get('/timeout')
