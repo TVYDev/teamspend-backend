@@ -7,9 +7,9 @@ import { PrismaService } from '@/prisma/prisma.service';
 export class UsersService {
   constructor(private prismaService: PrismaService) {}
 
-  async findUser(id: number): Promise<User | null> {
+  async findOne(email: string): Promise<User | null> {
     return this.prismaService.user.findFirst({
-      where: { id },
+      where: { email },
     });
   }
 }
