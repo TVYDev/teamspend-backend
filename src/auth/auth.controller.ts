@@ -12,11 +12,14 @@ import {
 import { AuthService } from './auth.service';
 import { GetAccessTokenDto } from './dto/get-access-token.dto';
 import { AuthGuard } from './auth.guard';
+import { SkipAuth } from './auth.decorator';
+import { AuthenticatedRequest } from './interfaces/authenticated-request';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @SkipAuth()
   @HttpCode(HttpStatus.OK)
   @Post('token')
   getAccessToken(@Body() getAccessTokenDto: GetAccessTokenDto) {
@@ -26,10 +29,9 @@ export class AuthController {
     );
   }
 
-  //TODO: update with new interface of Request object with user property
   @UseGuards(AuthGuard)
   @Get('profile')
-  getProfile(@Request() request: Request) {
-    return 'user' in request ? request.user : null;
+  getProfile(@Request() request: AuthenticatedRequest) {
+    return request.user || null;
   }
 }
