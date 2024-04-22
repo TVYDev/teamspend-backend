@@ -1,35 +1,24 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
 
+import { User } from '@prisma/client';
 import { AuthService } from './auth.service';
-import { GetAccessTokenDto } from './dto/get-access-token.dto';
-import { AuthGuard } from './auth.guard';
-import { SkipAuth } from './auth.decorator';
 import { AuthenticatedRequest } from './interfaces/authenticated-request';
+import { LocalAuthGuard } from './local-auth.guard';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { Public } from './auth.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @SkipAuth()
-  @HttpCode(HttpStatus.OK)
-  @Post('token')
-  getAccessToken(@Body() getAccessTokenDto: GetAccessTokenDto) {
-    return this.authService.getAccessToken(
-      getAccessTokenDto.email,
-      getAccessTokenDto.password
-    );
+  @Public()
+  @UseGuards(LocalAuthGuard)
+  @Post('login')
+  async login(@Request() request: Request & { user: User }) {
+    return this.authService.login(request.user);
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Request() request: AuthenticatedRequest) {
     return request.user || null;
