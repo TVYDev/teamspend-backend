@@ -7,6 +7,7 @@ import { AuthenticatedRequest } from './interfaces/authenticated-request';
 import { LocalAuthGuard } from './local-auth.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { Public } from './auth.decorator';
+import { authCookieName } from './constants';
 
 @Controller('auth')
 export class AuthController {
@@ -21,7 +22,7 @@ export class AuthController {
   ) {
     const responseData = await this.authService.login(req.user);
 
-    res.cookie('access_token', responseData.access_token, {
+    res.cookie(authCookieName.accessToken, responseData.access_token, {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',

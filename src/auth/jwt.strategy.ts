@@ -1,15 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy, WithSecretOrKey } from 'passport-jwt';
+import { Request } from 'express';
 
-import { jwtConstants } from './constants';
+import { authCookieName, jwtConstants } from './constants';
 import { AccessTokenJwtPayload } from './interfaces/access-token-jwt-payload.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: accessTokenJwtFromCookieOrAuthHeader,
       /** Set value "false" to delegate the responsibility of ensuring that a JWT has not expired to the Passport module. */
       ignoreExpiration: false,
       secretOrKey: jwtConstants.secret,
@@ -23,3 +24,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return { id: payload.sub, email: payload.email };
   }
 }
+
+const accessTokenJwtFromCookieOrAuthHeader = (req: Request) => {
+  let accessTokenJwt = null;
+
+  if (req && req.cookies) {
+    accessTokenJwt = req.cookies[authCookieName.accessToken];
+  }
+
+  return accessTokenJwt || ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+};
