@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Response, Request } from 'express';
 
 import { User } from '@prisma/client';
 import { AuthService } from './auth.service';
@@ -14,13 +15,24 @@ export class AuthController {
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() request: Request & { user: User }) {
-    return this.authService.login(request.user);
+  async login(
+    @Req() req: Request & { user: User },
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const responseData = await this.authService.login(req.user);
+
+    res.cookie('access_token', responseData.access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+    });
+
+    return responseData;
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() request: AuthenticatedRequest) {
-    return request.user || null;
+  getProfile(@Req() req: AuthenticatedRequest) {
+    return req.user || null;
   }
 }
