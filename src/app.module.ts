@@ -8,7 +8,7 @@ import { HttpExceptionFilter } from './http-exception.filter';
 import { LoggingInterceptor } from './logger.interceptor';
 import { ResponseTransformInterceptor } from './response-transform.interceptor';
 import { TimeoutInterceptor } from './timeout.interceptor';
-import { UsersModule } from './users/users.module';
+import { AuthModule } from '@/auth/auth.module';
 
 @Module({
   imports: [
@@ -28,7 +28,7 @@ import { UsersModule } from './users/users.module';
         presence: 'required',
       },
     }),
-    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [

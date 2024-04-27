@@ -1,0 +1,24 @@
+Project TeamSpend {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # TeamSpend Database
+  '''
+}
+Table users as U {
+  id int [pk, increment]
+  username varchar(255) [not null, unique]
+  email varchar(255) [not null, unique]
+  password varchar(255) [not null]
+  first_name varchar(255) [not null]
+  middle_name varchar(255) 
+  last_name varchar(255) [not null]
+  status varchar(255) [not null, default: 'active', note: '''
+    Available values: 
+    - active
+    - inactive
+    - deleted
+    ''']
+  created_at timestamp [not null]
+  last_modified_at timestamp
+  note: "Contains user information"
+}
