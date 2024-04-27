@@ -26,6 +26,8 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',
+      expires: new Date(Date.now() + 1000 * 60 * 10), // TODO: Get from Redis config 10mn
+      maxAge: 1000 * 60 * 10, // TODO: Get from Redis config 10mn
     });
 
     return responseData;
