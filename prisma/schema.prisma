@@ -8,7 +8,20 @@ datasource db {
 }
 
 model User {
-  id    Int     @default(autoincrement()) @id
-  email String  @unique
-  name  String?
+  id               String   @id @default(uuid()) @db.VarChar(255)
+  username         String   @unique @db.VarChar(255)
+  email            String   @unique @db.VarChar(255)
+  password         String   @db.VarChar(255)
+  first_name       String   @db.VarChar(255)
+  middle_name      String?  @db.VarChar(255)
+  last_name        String   @db.VarChar(255)
+  status           Status   @default(ACTIVE)
+  created_at       DateTime @default(now())
+  last_modified_at DateTime @updatedAt
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  DELETED
 }
