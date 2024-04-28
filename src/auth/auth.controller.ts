@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { Response, Request } from 'express';
 
 import { User } from '@prisma/client';
@@ -8,6 +16,7 @@ import { LocalAuthGuard } from './local-auth.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { Public } from './auth.decorator';
 import { authCookieName } from './constants';
+import { SignUpDto } from './dto/sign-up.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -31,6 +40,13 @@ export class AuthController {
     });
 
     return responseData;
+  }
+
+  @Public()
+  @Post('sign-up')
+  async signUp(@Body() signUpDto: SignUpDto) {
+    // TODO: return access token upon success create
+    return this.authService.signUp(signUpDto);
   }
 
   @UseGuards(JwtAuthGuard)
