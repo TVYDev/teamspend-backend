@@ -2,10 +2,12 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
-import { ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 
 import { AppModule } from './app.module';
 import { logger } from './logger.middleware';
+import { ExceptionCause } from './interfaces/exception.interface';
+import { exceptionErrorCode } from './constants/exception';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -14,7 +16,13 @@ async function bootstrap() {
   app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
-      disableErrorMessages: false,
+      exceptionFactory: () => {
+        throw new BadRequestException('Bad request', {
+          cause: {
+            errorCode: exceptionErrorCode.VALIDATION_ERROR,
+          } as ExceptionCause,
+        });
+      },
     })
   );
 
