@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Post,
   Req,
   Res,
@@ -15,7 +17,6 @@ import { AuthenticatedRequest } from './interfaces/authenticated-request';
 import { LocalAuthGuard } from './local-auth.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { Public } from './auth.decorator';
-import { authCookieName } from './constants';
 import { SignUpDto } from './dto/sign-up.dto';
 
 @Controller('auth')
@@ -24,6 +25,7 @@ export class AuthController {
 
   @Public()
   @UseGuards(LocalAuthGuard)
+  @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(
     @Req() req: Request & { user: User },
@@ -31,22 +33,24 @@ export class AuthController {
   ) {
     const responseData = await this.authService.login(req.user);
 
-    res.cookie(authCookieName.accessToken, responseData.access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      expires: new Date(Date.now() + 1000 * 60 * 10), // TODO: Get from Redis config 10mn
-      maxAge: 1000 * 60 * 10, // TODO: Get from Redis config 10mn
-    });
+    this.authService.setAuthCookie(res, responseData.access_token);
 
     return responseData;
   }
 
   @Public()
+  @HttpCode(HttpStatus.OK)
   @Post('sign-up')
-  async signUp(@Body() signUpDto: SignUpDto) {
-    // TODO: return access token upon success create
-    return this.authService.signUp(signUpDto);
+  async signUp(
+    @Body() signUpDto: SignUpDto,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const createdUser = await this.authService.signUp(signUpDto);
+    const resultLoginData = await this.authService.login(createdUser);
+
+    this.authService.setAuthCookie(res, resultLoginData.access_token);
+
+    return resultLoginData;
   }
 
   @UseGuards(JwtAuthGuard)

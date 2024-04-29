@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { Response } from 'express';
 
+import { User } from '@prisma/client';
 import { UsersService } from '@/users/users.service';
 import { AccessTokenJwtPayload } from './interfaces/access-token-jwt-payload.interface';
-import { User } from '@prisma/client';
 import { SignUpDto } from './dto/sign-up.dto';
+import { authCookieName } from './constants';
 
 @Injectable()
 export class AuthService {
@@ -46,6 +48,16 @@ export class AuthService {
       ...signUpDto,
       password: hashedPassword,
       username,
+    });
+  }
+
+  setAuthCookie(res: Response, accessToken: string) {
+    res.cookie(authCookieName.accessToken, accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      expires: new Date(Date.now() + 1000 * 60 * 10), // TODO: Get from Redis config 10mn
+      maxAge: 1000 * 60 * 10, // TODO: Get from Redis config 10mn
     });
   }
 }
