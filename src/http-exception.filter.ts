@@ -15,6 +15,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const _request = ctx.getRequest<Request>();
     const status = exception.getStatus();
 
+    // TODO: utilize log
+    console.log('E', exception.getResponse());
+
     /**
      * TODO: Dynamic code and trace_id
      */
