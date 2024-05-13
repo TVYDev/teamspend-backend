@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { PassportModule } from '@nestjs/passport';
 
 import { UsersModule } from '@/users/users.module';
+import { CryptoModule } from '@/crypto/crypto.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { jwtConstants } from './constants';
@@ -19,6 +20,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: jwtConstants.ttl },
     }),
+    CryptoModule,
   ],
   controllers: [AuthController],
   providers: [
