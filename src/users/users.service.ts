@@ -14,6 +14,12 @@ export class UsersService {
     });
   }
 
+  async findUserByEmail(email: string): Promise<User | null> {
+    return this.prismaService.user.findFirst({
+      where: { email },
+    });
+  }
+
   async findActiveUserByEmail(email: string): Promise<User | null> {
     return this.prismaService.user.findFirst({
       where: { email, status: Status.ACTIVE },

@@ -22,7 +22,7 @@ export class IsUserAlreadyExistConstraint
   constructor(private usersService: UsersService) {}
 
   async validate(email: string) {
-    const user = await this.usersService.findActiveUserByEmail(email);
+    const user = await this.usersService.findUserByEmail(email);
     return !user;
   }
 
