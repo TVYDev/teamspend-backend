@@ -2,14 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { useContainer } from 'class-validator';
 
 import { AppModule } from './app.module';
 import { logger } from './logger.middleware';
-import { ExceptionCause } from './interfaces/exception.interface';
-import { exceptionErrorCode } from './constants/exception';
 import { IS_USER_ALREADY_EXIST_CONSTRAINT_NAME } from './users/decorators/is-user-already-exist.decorator';
+import { InvalidRequestPayloadException } from './exceptions/invalid-request-payload.exception';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -30,11 +29,7 @@ async function bootstrap() {
         // TODO: to add validation errors into log
         console.log('Validation Errors', errors);
 
-        throw new BadRequestException(validationErrorMessage, {
-          cause: {
-            errorCode: exceptionErrorCode.VALIDATION_ERROR,
-          } as ExceptionCause,
-        });
+        throw new InvalidRequestPayloadException(validationErrorMessage);
       },
     })
   );

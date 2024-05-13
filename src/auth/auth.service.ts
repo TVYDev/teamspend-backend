@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
@@ -10,8 +6,8 @@ import { Response } from 'express';
 import { User } from '@prisma/client';
 import { UsersService } from '@/users/users.service';
 import { CryptoService } from '@/crypto/crypto.service';
-import { ExceptionCause } from '@/interfaces/exception.interface';
-import { exceptionErrorCode } from '@/constants/exception';
+import { IncorrectUserCredentialsException } from '@/exceptions/incorrect-user-credentials.exception';
+import { InvalidRequestPayloadException } from '@/exceptions/invalid-request-payload.exception';
 import { AccessTokenJwtPayload } from './interfaces/access-token-jwt-payload.interface';
 import { SignUpDto } from './dto/sign-up.dto';
 import { authCookieName } from './constants';
@@ -32,12 +28,7 @@ export class AuthService {
       try {
         decryptedPassword = this.cryptoService.decryptRsa(password);
       } catch {
-        //TODO: can put this exception to somewhere reusable?
-        throw new UnauthorizedException('User credentials are incorrect', {
-          cause: {
-            errorCode: exceptionErrorCode.INCORRECT_USER_CREDENTIALS,
-          } as ExceptionCause,
-        });
+        throw new IncorrectUserCredentialsException();
       }
 
       const isPasswordCorrect = await bcrypt.compare(
@@ -69,12 +60,7 @@ export class AuthService {
     try {
       decryptedPassword = this.cryptoService.decryptRsa(signUpDto.password);
     } catch {
-      //TODO: can put this exception to somewhere reusable?
-      throw new BadRequestException('Bad request', {
-        cause: {
-          errorCode: exceptionErrorCode.VALIDATION_ERROR,
-        } as ExceptionCause,
-      });
+      throw new InvalidRequestPayloadException();
     }
 
     const salt = await bcrypt.genSalt();
