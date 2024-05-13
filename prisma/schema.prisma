@@ -9,8 +9,8 @@ datasource db {
 
 model User {
   id               String   @id @default(uuid()) @db.VarChar(255)
-  username         String   @unique @db.VarChar(255)
-  email            String   @unique @db.VarChar(255)
+  username         String   @db.VarChar(255)
+  email            String   @db.VarChar(255)
   password         String   @db.VarChar(255)
   first_name       String   @db.VarChar(255)
   middle_name      String?  @db.VarChar(255)
@@ -18,6 +18,9 @@ model User {
   status           Status   @default(ACTIVE)
   created_at       DateTime @default(now())
   last_modified_at DateTime @updatedAt
+
+  @@unique([email, status])
+  @@unique([username, status])
 }
 
 enum Status {
