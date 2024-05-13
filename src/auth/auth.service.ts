@@ -17,7 +17,7 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string) {
-    const user = await this.usersService.findOne(email);
+    const user = await this.usersService.findActiveUserByEmail(email);
     if (user && (await bcrypt.compare(password, user.password))) {
       return user;
     }
@@ -38,12 +38,11 @@ export class AuthService {
     /**
      * TODO: user password with RSA
      */
-    const username = `user_${Date.now()}`;
-
+    const username = await this.usersService.generateUsername();
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(signUpDto.password, salt);
 
-    return this.usersService.create({
+    return this.usersService.createUser({
       ...signUpDto,
       password: hashedPassword,
       username,

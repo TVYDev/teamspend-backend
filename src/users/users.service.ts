@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { User } from '@prisma/client';
+import { Status, User } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -8,13 +8,20 @@ import { CreateUserDto } from './dto/create-user.dto';
 export class UsersService {
   constructor(private prismaService: PrismaService) {}
 
-  async findOne(email: string): Promise<User | null> {
+  async findActiveUserByEmail(email: string): Promise<User | null> {
     return this.prismaService.user.findFirst({
-      where: { email },
+      where: { email, status: Status.ACTIVE },
     });
   }
 
-  async create(data: CreateUserDto): Promise<User> {
+  async createUser(data: CreateUserDto): Promise<User> {
     return this.prismaService.user.create({ data });
+  }
+
+  async generateUsername() {
+    const { nanoid } = await (eval(`import('nanoid')`) as Promise<
+      typeof import('nanoid')
+    >);
+    return `user_${nanoid(10)}`;
   }
 }
