@@ -4,8 +4,8 @@ Project TeamSpend {
     # TeamSpend Database
   '''
 }
-Table users as U {
-  id int [pk, increment]
+Table users {
+  id varchar(255) [pk, note: 'uuid']
   username varchar(255) [not null, unique]
   email varchar(255) [not null, unique]
   password varchar(255) [not null]
@@ -14,11 +14,11 @@ Table users as U {
   last_name varchar(255) [not null]
   status varchar(255) [not null, default: 'active', note: '''
     Available values: 
-    - active
-    - inactive
-    - deleted
+    - ACTIVE
+    - INACTIVE
+    - DELETED
     ''']
-  created_at timestamp [not null]
+  created_at timestamp [not null, default: 'now()']
   last_modified_at timestamp
   note: "Contains user information"
 }
