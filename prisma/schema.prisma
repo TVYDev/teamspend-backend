@@ -21,6 +21,7 @@ model User {
 
   @@unique([email, status])
   @@unique([username, status])
+  @@map("users")
 }
 
 enum Status {
