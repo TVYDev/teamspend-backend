@@ -1,7 +1,10 @@
 import { IsEmail, IsNotEmpty } from 'class-validator';
 
+import { IsUserAlreadyExist } from '@/users/decorators/is-user-already-exist.decorator';
+
 export class SignUpDto {
   @IsEmail()
+  @IsUserAlreadyExist()
   email: string;
 
   @IsNotEmpty()
