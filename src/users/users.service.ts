@@ -8,6 +8,12 @@ import { CreateUserDto } from './dto/create-user.dto';
 export class UsersService {
   constructor(private prismaService: PrismaService) {}
 
+  async findActiveUserById(id: string): Promise<User | null> {
+    return this.prismaService.user.findFirst({
+      where: { id, status: Status.ACTIVE },
+    });
+  }
+
   async findActiveUserByEmail(email: string): Promise<User | null> {
     return this.prismaService.user.findFirst({
       where: { email, status: Status.ACTIVE },
