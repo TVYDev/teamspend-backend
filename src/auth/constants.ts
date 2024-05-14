@@ -1,5 +1,6 @@
 export const authCookieName = {
   accessToken: 'access_token',
+  refresh_token: 'refresh_token',
 } as const;
 
 // TODO: To use Redis configuration

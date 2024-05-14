@@ -5,7 +5,7 @@ import { Request } from 'express';
 
 import { UsersService } from '@/users/users.service';
 import { authCookieName, jwtConstants } from './constants';
-import { AccessTokenJwtPayload } from './interfaces/access-token-jwt-payload.interface';
+import { AccessTokenJwtPayload } from './auth.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -27,7 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // TODO: could do token revocation here
-    return { id: payload.sub, email: payload.email };
+    return user;
   }
 }
 

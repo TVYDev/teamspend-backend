@@ -13,7 +13,7 @@ import { Response, Request } from 'express';
 
 import { User } from '@prisma/client';
 import { AuthService } from './auth.service';
-import { AuthenticatedRequest } from './interfaces/authenticated-request';
+import { AuthenticatedRequest } from './auth.interface';
 import { LocalAuthGuard } from './local-auth.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { Public } from './auth.decorator';
@@ -31,11 +31,11 @@ export class AuthController {
     @Req() req: Request & { user: User },
     @Res({ passthrough: true }) res: Response
   ) {
-    const responseData = await this.authService.login(req.user);
+    const resultLoginData = await this.authService.login(req.user);
 
-    this.authService.setAuthCookie(res, responseData.access_token);
+    this.authService.setAuthCookie(res, resultLoginData);
 
-    return responseData;
+    return resultLoginData;
   }
 
   @Public()
@@ -48,7 +48,7 @@ export class AuthController {
     const createdUser = await this.authService.signUp(signUpDto);
     const resultLoginData = await this.authService.login(createdUser);
 
-    this.authService.setAuthCookie(res, resultLoginData.access_token);
+    this.authService.setAuthCookie(res, resultLoginData);
 
     return resultLoginData;
   }
