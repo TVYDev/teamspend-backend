@@ -5,9 +5,9 @@ import * as Joi from 'joi';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HttpExceptionFilter } from './http-exception.filter';
-import { LoggingInterceptor } from './logger.interceptor';
-import { ResponseTransformInterceptor } from './response-transform.interceptor';
-import { TimeoutInterceptor } from './timeout.interceptor';
+import { LoggingInterceptor } from './lib/interceptors/logger.interceptor';
+import { ResponseTransformInterceptor } from './lib/interceptors/response-transform.interceptor';
+import { TimeoutInterceptor } from './lib/interceptors/timeout.interceptor';
 import { AuthModule } from '@/auth/auth.module';
 
 @Module({

@@ -1,4 +1,4 @@
-import { exceptionErrorCode } from '@/constants/exception';
+import { exceptionErrorCode } from '@/lib/constants/exception';
 
 export interface ExceptionCause {
   errorCode: ExceptionErrorCode;

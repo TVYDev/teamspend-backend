@@ -8,7 +8,7 @@ import { useContainer } from 'class-validator';
 import { AppModule } from './app.module';
 import { logger } from './logger.middleware';
 import { IS_USER_ALREADY_EXIST_CONSTRAINT_NAME } from './users/decorators/is-user-already-exist.decorator';
-import { InvalidRequestPayloadException } from './exceptions/invalid-request-payload.exception';
+import { InvalidRequestPayloadException } from './lib/exceptions/invalid-request-payload.exception';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

@@ -6,8 +6,8 @@ import { Response } from 'express';
 import { User } from '@prisma/client';
 import { UsersService } from '@/users/users.service';
 import { CryptoService } from '@/crypto/crypto.service';
-import { IncorrectUserCredentialsException } from '@/exceptions/incorrect-user-credentials.exception';
-import { InvalidRequestPayloadException } from '@/exceptions/invalid-request-payload.exception';
+import { IncorrectUserCredentialsException } from '@/lib/exceptions/incorrect-user-credentials.exception';
+import { InvalidRequestPayloadException } from '@/lib/exceptions/invalid-request-payload.exception';
 import { TokensService } from '@/tokens/tokens.service';
 import {
   AccessTokenJwtPayload,

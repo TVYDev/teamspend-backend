@@ -1,7 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 
-import { exceptionErrorCode } from '@/constants/exception';
-import { ExceptionCause } from '@/interfaces/exception.interface';
+import { exceptionErrorCode } from '@/lib/constants/exception';
+import { ExceptionCause } from '@/lib/interfaces/exception.interface';
 
 export class IncorrectUserCredentialsException extends UnauthorizedException {
   constructor() {
