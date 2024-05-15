@@ -6,9 +6,14 @@ import { Response } from 'express';
 import { User } from '@prisma/client';
 import { UsersService } from '@/users/users.service';
 import { CryptoService } from '@/crypto/crypto.service';
-import { IncorrectUserCredentialsException } from '@/exceptions/incorrect-user-credentials.exception';
-import { InvalidRequestPayloadException } from '@/exceptions/invalid-request-payload.exception';
-import { AccessTokenJwtPayload } from './interfaces/access-token-jwt-payload.interface';
+import { IncorrectUserCredentialsException } from '@/lib/exceptions/incorrect-user-credentials.exception';
+import { InvalidRequestPayloadException } from '@/lib/exceptions/invalid-request-payload.exception';
+import { TokensService } from '@/tokens/tokens.service';
+import {
+  AccessTokenJwtPayload,
+  NewJwtTokenResponse,
+  RefreshTokenJwtPayload,
+} from './auth.interface';
 import { SignUpDto } from './dto/sign-up.dto';
 import { authCookieName } from './constants';
 
@@ -17,7 +22,8 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private cryptoService: CryptoService
+    private cryptoService: CryptoService,
+    private tokensService: TokensService
   ) {}
 
   async validateUser(email: string, password: string) {
@@ -45,12 +51,25 @@ export class AuthService {
   }
 
   async login(user: User) {
-    const payload: AccessTokenJwtPayload = {
-      email: user.email,
+    const accessTokenPayload: AccessTokenJwtPayload = {
       sub: user.id,
     };
 
-    return { access_token: this.jwtService.sign(payload) };
+    const refreshTokenIdentity =
+      await this.tokensService.createRefreshToken(user);
+    const refreshTokenPayload: RefreshTokenJwtPayload = {
+      sub: user.id,
+      tokenId: refreshTokenIdentity.id,
+    };
+
+    return {
+      access_token: this.jwtService.sign(accessTokenPayload, {
+        expiresIn: 60 * 10, // TODO: Get from Redis config
+      }),
+      refresh_token: this.jwtService.sign(refreshTokenPayload, {
+        expiresIn: 60 * 60 * 24 * 7, // TODO: Get from Redis config
+      }),
+    };
   }
 
   async signUp(signUpDto: SignUpDto) {
@@ -73,13 +92,21 @@ export class AuthService {
     });
   }
 
-  setAuthCookie(res: Response, accessToken: string) {
-    res.cookie(authCookieName.accessToken, accessToken, {
+  setAuthCookie(res: Response, data: NewJwtTokenResponse) {
+    res.cookie(authCookieName.ACCESS_TOKEN, data.access_token, {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',
       expires: new Date(Date.now() + 1000 * 60 * 10), // TODO: Get from Redis config 10mn
       maxAge: 1000 * 60 * 10, // TODO: Get from Redis config 10mn
+    });
+
+    res.cookie(authCookieName.REFRESH_TOKEN, data.refresh_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // TODO: Get from Redis config 7 days
+      maxAge: 1000 * 60 * 60 * 24 * 7, // TODO: Get from Redis config 7 days
     });
   }
 }
