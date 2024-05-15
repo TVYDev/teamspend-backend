@@ -93,7 +93,7 @@ export class AuthService {
   }
 
   setAuthCookie(res: Response, data: NewJwtTokenResponse) {
-    res.cookie(authCookieName.accessToken, data.access_token, {
+    res.cookie(authCookieName.ACCESS_TOKEN, data.access_token, {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',
@@ -101,7 +101,7 @@ export class AuthService {
       maxAge: 1000 * 60 * 10, // TODO: Get from Redis config 10mn
     });
 
-    res.cookie(authCookieName.refresh_token, data.refresh_token, {
+    res.cookie(authCookieName.REFRESH_TOKEN, data.refresh_token, {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',

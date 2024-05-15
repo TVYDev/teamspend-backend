@@ -22,11 +22,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // TODO: utilize log
     console.log('E', exception.getResponse());
 
+    const errorCode =
+      exceptionCause?.errorCode || exceptionErrorCode.GENERAL_ERROR;
+
     /**
      * TODO: Dynamic code and trace_id
      */
     response.status(status).json({
-      code: exceptionCause?.errorCode || exceptionErrorCode.GENERAL_ERROR,
+      code: errorCode,
       message: exception.message,
       data: null,
       timestamp: new Date().getTime(),

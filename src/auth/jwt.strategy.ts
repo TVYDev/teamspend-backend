@@ -27,7 +27,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // TODO: could do token revocation here
-    return user;
+    const { password: _, ...result } = user;
+    return result;
   }
 }
 
@@ -35,7 +36,7 @@ const accessTokenJwtFromCookieOrAuthHeader = (req: Request) => {
   let accessTokenJwt = null;
 
   if (req && req.cookies) {
-    accessTokenJwt = req.cookies[authCookieName.accessToken];
+    accessTokenJwt = req.cookies[authCookieName.ACCESS_TOKEN];
   }
 
   return accessTokenJwt || ExtractJwt.fromAuthHeaderAsBearerToken()(req);
