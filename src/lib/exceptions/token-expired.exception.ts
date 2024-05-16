@@ -1,13 +1,13 @@
-import { ForbiddenException } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 
 import { exceptionErrorCode } from '@/lib/constants/exception';
 import { ExceptionCause } from '@/lib/interfaces/exception.interface';
 
-export class ForbiddenResourceException extends ForbiddenException {
+export class TokenExpiredException extends UnauthorizedException {
   constructor() {
-    super('Forbidden', {
+    super('Token is expired', {
       cause: {
-        errorCode: exceptionErrorCode.FORBIDDEN_RESOURCE,
+        errorCode: exceptionErrorCode.EXPIRED_TOKEN,
       } as ExceptionCause,
     });
   }

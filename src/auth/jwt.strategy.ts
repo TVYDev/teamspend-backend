@@ -32,7 +32,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 }
 
-const accessTokenJwtFromCookieOrAuthHeader = (req: Request) => {
+export const accessTokenJwtFromCookieOrAuthHeader = (req: Request) => {
   let accessTokenJwt = null;
 
   if (req && req.cookies) {
