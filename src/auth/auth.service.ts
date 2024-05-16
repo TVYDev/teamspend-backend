@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { Response } from 'express';
+import { CookieOptions, Response } from 'express';
 
 import { User } from '@prisma/client';
 import { UsersService } from '@/users/users.service';
@@ -16,6 +16,22 @@ import {
 } from './auth.interface';
 import { SignUpDto } from './dto/sign-up.dto';
 import { authCookieName } from './constants';
+
+const ACCESS_TOKEN_COOKIE_OPTIONS: CookieOptions = {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'lax',
+  expires: new Date(Date.now() + 1000 * 60 * 10), // TODO: Get from Redis config 10mn
+  maxAge: 1000 * 60 * 10, // TODO: Get from Redis config 10mn
+};
+
+const REFRESH_TOKEN_COOKIE_OPTIONS: CookieOptions = {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'lax',
+  expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // TODO: Get from Redis config 7 days
+  maxAge: 1000 * 60 * 60 * 24 * 7, // TODO: Get from Redis config 7 days
+};
 
 @Injectable()
 export class AuthService {
@@ -51,12 +67,15 @@ export class AuthService {
   }
 
   async login(user: User) {
-    const accessTokenPayload: AccessTokenJwtPayload = {
-      sub: user.id,
-    };
-
     const refreshTokenIdentity =
       await this.tokensService.createRefreshToken(user);
+
+    const accessTokenPayload: AccessTokenJwtPayload = {
+      sub: user.id,
+      /** Used for revoking refresh token upon logout */
+      refreshTokenId: refreshTokenIdentity.id,
+    };
+
     const refreshTokenPayload: RefreshTokenJwtPayload = {
       sub: user.id,
       tokenId: refreshTokenIdentity.id,
@@ -93,20 +112,29 @@ export class AuthService {
   }
 
   setAuthCookie(res: Response, data: NewJwtTokenResponse) {
-    res.cookie(authCookieName.ACCESS_TOKEN, data.access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      expires: new Date(Date.now() + 1000 * 60 * 10), // TODO: Get from Redis config 10mn
-      maxAge: 1000 * 60 * 10, // TODO: Get from Redis config 10mn
-    });
+    res.cookie(
+      authCookieName.ACCESS_TOKEN,
+      data.access_token,
+      ACCESS_TOKEN_COOKIE_OPTIONS
+    );
 
-    res.cookie(authCookieName.REFRESH_TOKEN, data.refresh_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // TODO: Get from Redis config 7 days
-      maxAge: 1000 * 60 * 60 * 24 * 7, // TODO: Get from Redis config 7 days
+    res.cookie(
+      authCookieName.REFRESH_TOKEN,
+      data.refresh_token,
+      REFRESH_TOKEN_COOKIE_OPTIONS
+    );
+  }
+
+  clearAuthCookie(res: Response) {
+    res.cookie(authCookieName.ACCESS_TOKEN, '', {
+      ...ACCESS_TOKEN_COOKIE_OPTIONS,
+      maxAge: 0,
+      expires: new Date(Date.now()),
+    });
+    res.cookie(authCookieName.REFRESH_TOKEN, '', {
+      ...REFRESH_TOKEN_COOKIE_OPTIONS,
+      maxAge: 0,
+      expires: new Date(Date.now()),
     });
   }
 }

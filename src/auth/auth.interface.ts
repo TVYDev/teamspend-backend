@@ -1,5 +1,9 @@
+import { User } from '@prisma/client';
+import { Request } from 'express';
+
 export interface AccessTokenJwtPayload {
   sub: string;
+  refreshTokenId: string;
 }
 
 export interface RefreshTokenJwtPayload {
@@ -13,5 +17,5 @@ export interface NewJwtTokenResponse {
 }
 
 export interface AuthenticatedRequest extends Request {
-  user: AccessTokenJwtPayload;
+  user: User;
 }
