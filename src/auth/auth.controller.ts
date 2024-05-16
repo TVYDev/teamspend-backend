@@ -11,13 +11,17 @@ import {
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
-import { TokenType, User } from '@prisma/client';
+import { TokenType } from '@prisma/client';
 
 import { TokensService } from '@/tokens/tokens.service';
 import { ForbiddenResourceException } from '@/lib/exceptions/forbidden-resource.exception';
 import { UsersService } from '@/users/users.service';
 import { AuthService } from './auth.service';
-import { AuthenticatedRequest, RefreshTokenJwtPayload } from './auth.interface';
+import {
+  AccessTokenJwtPayload,
+  AuthenticatedRequest,
+  RefreshTokenJwtPayload,
+} from './auth.interface';
 import { LocalAuthGuard } from './local-auth.guard';
 import { Public } from './auth.decorator';
 import { SignUpDto } from './dto/sign-up.dto';
@@ -38,7 +42,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(
-    @Req() req: Request & { user: User },
+    @Req() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response
   ) {
     const resultLoginData = await this.authService.login(req.user);
@@ -104,5 +108,24 @@ export class AuthController {
     }
 
     throw new ForbiddenResourceException();
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(
+    @Req() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const accessTokenJwt = req.cookies[authCookieName.ACCESS_TOKEN];
+    const decodedAccessTokenPayload =
+      this.jwtService.decode<AccessTokenJwtPayload>(accessTokenJwt);
+
+    if (decodedAccessTokenPayload.refreshTokenId) {
+      await this.tokensService.revokeTokenById(
+        decodedAccessTokenPayload.refreshTokenId
+      );
+    }
+
+    this.authService.clearAuthCookie(res);
   }
 }

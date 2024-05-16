@@ -27,7 +27,7 @@ export class ResponseTransformInterceptor<T>
       map((data) => ({
         code: 'S_001',
         message: 'Success',
-        data,
+        data: data || null,
         trace_id: 'TRACE_ID',
         timestamp: new Date().getTime(),
       }))
