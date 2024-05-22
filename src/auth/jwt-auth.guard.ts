@@ -7,6 +7,7 @@ import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { TokenExpiredException } from '@/lib/exceptions/token-expired.exception';
 import { IS_PUBLIC } from './auth.decorator';
 import { accessTokenJwtFromCookieOrAuthHeader } from './jwt.strategy';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -17,7 +18,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     super();
   }
 
-  async canActivate(context: ExecutionContext) {
+  canActivate(
+    context: ExecutionContext
+  ): boolean | Promise<boolean> | Observable<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC, [
       context.getHandler(),
       context.getClass(),
@@ -34,7 +37,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const accessTokenJwt = accessTokenJwtFromCookieOrAuthHeader(request);
 
     try {
-      return await this.jwtService.verifyAsync(accessTokenJwt);
+      this.jwtService.verify(accessTokenJwt);
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         throw new TokenExpiredException();

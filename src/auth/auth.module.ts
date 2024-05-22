@@ -5,7 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 
 import { UsersModule } from '@/users/users.module';
 import { CryptoModule } from '@/crypto/crypto.module';
-import { TokensModule } from '@/tokens/tokens.module';
+import { SessionsModule } from '@/sessions/sessions.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { jwtConstants } from './constants';
@@ -22,7 +22,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
       signOptions: { expiresIn: jwtConstants.ttl },
     }),
     CryptoModule,
-    TokensModule,
+    SessionsModule,
   ],
   controllers: [AuthController],
   providers: [

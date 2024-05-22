@@ -3,12 +3,13 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { CookieOptions, Response } from 'express';
 
-import { User } from '@prisma/client';
+import { SessionType, User } from '@prisma/client';
 import { UsersService } from '@/users/users.service';
 import { CryptoService } from '@/crypto/crypto.service';
+import { SessionsService } from '@/sessions/sessions.service';
 import { IncorrectUserCredentialsException } from '@/lib/exceptions/incorrect-user-credentials.exception';
 import { InvalidRequestPayloadException } from '@/lib/exceptions/invalid-request-payload.exception';
-import { TokensService } from '@/tokens/tokens.service';
+import { DeviceInfo } from '@/lib/interfaces/request';
 import {
   AccessTokenJwtPayload,
   NewJwtTokenResponse,
@@ -39,7 +40,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private cryptoService: CryptoService,
-    private tokensService: TokensService
+    private sessionsService: SessionsService
   ) {}
 
   async validateUser(email: string, password: string) {
@@ -66,19 +67,23 @@ export class AuthService {
     return null;
   }
 
-  async login(user: User) {
-    const refreshTokenIdentity =
-      await this.tokensService.createRefreshToken(user);
+  async login(user: User, deviceInfo: DeviceInfo) {
+    const session = await this.sessionsService.createSession({
+      user_id: user.id,
+      type: SessionType.LOGIN,
+      expired_at: REFRESH_TOKEN_COOKIE_OPTIONS.expires || new Date(),
+      device_id: deviceInfo.deviceId,
+      device_name: deviceInfo.deviceName,
+    });
 
     const accessTokenPayload: AccessTokenJwtPayload = {
       sub: user.id,
-      /** Used for revoking refresh token upon logout */
-      refreshTokenId: refreshTokenIdentity.id,
+      sessionId: session.id,
     };
 
     const refreshTokenPayload: RefreshTokenJwtPayload = {
       sub: user.id,
-      tokenId: refreshTokenIdentity.id,
+      sessionId: session.id,
     };
 
     return {

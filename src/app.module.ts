@@ -8,6 +8,8 @@ import { HttpExceptionFilter } from './http-exception.filter';
 import { LoggingInterceptor } from './lib/interceptors/logger.interceptor';
 import { ResponseTransformInterceptor } from './lib/interceptors/response-transform.interceptor';
 import { TimeoutInterceptor } from './lib/interceptors/timeout.interceptor';
+import { SessionsModule } from './sessions/sessions.module';
+import { HttpHeaderGuard } from './http-headers.guard';
 import { AuthModule } from '@/auth/auth.module';
 
 @Module({
@@ -29,6 +31,7 @@ import { AuthModule } from '@/auth/auth.module';
       },
     }),
     AuthModule,
+    SessionsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -48,6 +51,10 @@ import { AuthModule } from '@/auth/auth.module';
     {
       provide: 'APP_INTERCEPTOR',
       useClass: TimeoutInterceptor,
+    },
+    {
+      provide: 'APP_GUARD',
+      useClass: HttpHeaderGuard,
     },
   ],
 })

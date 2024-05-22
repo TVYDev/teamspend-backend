@@ -1,5 +1,6 @@
 Project TeamSpend {
   database_type: 'PostgreSQL'
+
   Note: '''
     # TeamSpend Database
   '''
@@ -21,7 +22,8 @@ Table users {
     ''']
   created_at timestamp [not null, default: 'now()']
   last_modified_at timestamp
-  note: "Contains user information"
+
+  Note: "Contains user information"
 }
 
 Table tokens {
@@ -40,7 +42,29 @@ Table tokens {
   created_at timestamp [not null, default: 'now()']
   last_modified_at timestamp
 
+  Note: "Contains token information"
+}
 
+Ref: users.id < sessions.user__id
+Table sessions {
+  id varchar(255) [pk, note: 'uuid']
+  user__id varchar(255) [not null]
+  type varchar(255) [not null, note: '''
+    Available values: 
+    - LOGIN
+    - RESET_PWD
+    ''']
+  status varchar(255) [not null, default: 'active', note: '''
+    Available values: 
+    - ACTIVE
+    - INACTIVE
+    - DELETED
+    ''']
+  device_id varchar(255)
+  device_name varchar(255)
+  expired_at timestamp [not null]
+  created_at timestamp [not null, default: 'now()']
+  last_modified_at timestamp
 
-  note: "Contains token information"
+  Note: "Contains session information"
 }

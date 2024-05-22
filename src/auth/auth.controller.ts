@@ -11,10 +11,11 @@ import {
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
-import { TokenType } from '@prisma/client';
+import { SessionType } from '@prisma/client';
 
-import { TokensService } from '@/tokens/tokens.service';
+import { SessionsService } from '@/sessions/sessions.service';
 import { ForbiddenResourceException } from '@/lib/exceptions/forbidden-resource.exception';
+import { getDeviceInfoFromHeaders } from '@/lib/helpers/request';
 import { UsersService } from '@/users/users.service';
 import { AuthService } from './auth.service';
 import {
@@ -33,7 +34,7 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private jwtService: JwtService,
-    private tokensService: TokensService,
+    private sessionsService: SessionsService,
     private usersService: UsersService
   ) {}
 
@@ -45,11 +46,13 @@ export class AuthController {
     @Req() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response
   ) {
-    const resultLoginData = await this.authService.login(req.user);
+    const deviceInfo = getDeviceInfoFromHeaders(req.headers);
+    const resultLoginData = await this.authService.login(req.user, deviceInfo);
 
     this.authService.setAuthCookie(res, resultLoginData);
 
-    return resultLoginData;
+    const { refresh_token: _, ...returnedResultLoginData } = resultLoginData;
+    return returnedResultLoginData;
   }
 
   @Public()
@@ -57,14 +60,20 @@ export class AuthController {
   @Post('sign-up')
   async signUp(
     @Body() signUpDto: SignUpDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response
   ) {
     const createdUser = await this.authService.signUp(signUpDto);
-    const resultLoginData = await this.authService.login(createdUser);
+    const deviceInfo = getDeviceInfoFromHeaders(req.headers);
+    const resultLoginData = await this.authService.login(
+      createdUser,
+      deviceInfo
+    );
 
     this.authService.setAuthCookie(res, resultLoginData);
 
-    return resultLoginData;
+    const { refresh_token: _, ...returnedResultLoginData } = resultLoginData;
+    return returnedResultLoginData;
   }
 
   @Get('profile')
@@ -84,25 +93,32 @@ export class AuthController {
     const decodedRefreshTokenPayload =
       this.jwtService.decode<RefreshTokenJwtPayload>(refreshTokenJwt);
 
-    if (decodedRefreshTokenPayload.tokenId) {
-      const activeToken = await this.tokensService.findActiveTokenByIdAndType(
-        decodedRefreshTokenPayload.tokenId,
-        TokenType.REFRESH_TOKEN
-      );
+    if (decodedRefreshTokenPayload.sessionId) {
+      const activeSession =
+        await this.sessionsService.findActiveSessionByIdAndType(
+          decodedRefreshTokenPayload.sessionId,
+          SessionType.LOGIN
+        );
 
-      if (activeToken) {
+      if (activeSession) {
         const user = await this.usersService.findActiveUserById(
-          activeToken.subject_id
+          activeSession.user__id
         );
 
         if (user) {
-          const resultLoginData = await this.authService.login(user);
+          const deviceInfo = getDeviceInfoFromHeaders(req.headers);
+          const resultLoginData = await this.authService.login(
+            user,
+            deviceInfo
+          );
 
           this.authService.setAuthCookie(res, resultLoginData);
 
-          await this.tokensService.revokeTokenById(activeToken.id);
+          await this.sessionsService.revokeSessionById(activeSession.id);
 
-          return resultLoginData;
+          const { refresh_token: _, ...returnedResultLoginData } =
+            resultLoginData;
+          return returnedResultLoginData;
         }
       }
     }
@@ -120,9 +136,9 @@ export class AuthController {
     const decodedAccessTokenPayload =
       this.jwtService.decode<AccessTokenJwtPayload>(accessTokenJwt);
 
-    if (decodedAccessTokenPayload.refreshTokenId) {
-      await this.tokensService.revokeTokenById(
-        decodedAccessTokenPayload.refreshTokenId
+    if (decodedAccessTokenPayload.sessionId) {
+      await this.sessionsService.revokeSessionById(
+        decodedAccessTokenPayload.sessionId
       );
     }
 
