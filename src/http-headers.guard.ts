@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Request } from 'express';
 
 import { requiredCustomHeader } from '@/lib/constants/request';
-import { ForbiddenResourceException } from '@/lib/exceptions/forbidden-resource.exception';
+import { UnauthorizedAccessException } from '@/lib/exceptions/unauthorized-access.exception';
 
 @Injectable()
 export class HttpHeaderGuard implements CanActivate {
@@ -18,7 +18,7 @@ export class HttpHeaderGuard implements CanActivate {
       )
     ) {
       //TODO: add logging
-      throw new ForbiddenResourceException();
+      throw new UnauthorizedAccessException();
     }
 
     return true;

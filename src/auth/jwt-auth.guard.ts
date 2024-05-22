@@ -4,23 +4,26 @@ import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 
+import { SessionType } from '@prisma/client';
+import { SessionsService } from '@/sessions/sessions.service';
 import { TokenExpiredException } from '@/lib/exceptions/token-expired.exception';
+import { getDeviceInfoFromHeaders } from '@/lib/helpers/request';
+import { UnauthorizedAccessException } from '@/lib/exceptions/unauthorized-access.exception';
 import { IS_PUBLIC } from './auth.decorator';
 import { accessTokenJwtFromCookieOrAuthHeader } from './jwt.strategy';
-import { Observable } from 'rxjs';
+import { AccessTokenJwtPayload } from './auth.interface';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(
     private reflector: Reflector,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private sessionsService: SessionsService
   ) {
     super();
   }
 
-  canActivate(
-    context: ExecutionContext
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  async canActivate(context: ExecutionContext) {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC, [
       context.getHandler(),
       context.getClass(),
@@ -37,13 +40,28 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const accessTokenJwt = accessTokenJwtFromCookieOrAuthHeader(request);
 
     try {
-      this.jwtService.verify(accessTokenJwt);
+      await this.jwtService.verifyAsync(accessTokenJwt);
+
+      // TODO: use Redis for faster lookup
+      const decodedAccessTokenJwt =
+        this.jwtService.decode<AccessTokenJwtPayload>(accessTokenJwt);
+      const deviceInfo = getDeviceInfoFromHeaders(request.headers);
+      const session = await this.sessionsService.findActiveSessionByIdAndType(
+        decodedAccessTokenJwt.sessionId,
+        SessionType.LOGIN
+      );
+
+      if (deviceInfo.deviceId !== session?.device_id) {
+        throw new UnauthorizedAccessException();
+      }
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         throw new TokenExpiredException();
       }
+
+      throw error;
     }
 
-    return super.canActivate(context);
+    return super.canActivate(context) as Promise<boolean>;
   }
 }

@@ -4,4 +4,5 @@ export const exceptionErrorCode = {
   VALIDATION_ERROR: 'E_003',
   FORBIDDEN_RESOURCE: 'E_004',
   EXPIRED_TOKEN: 'E_005',
+  UNAUTHORIZED_ACCESS: 'E_006',
 } as const;

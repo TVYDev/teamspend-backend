@@ -3,12 +3,14 @@ import {
   ExceptionFilter,
   HttpException,
   Catch,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 
 import { StandardResponse } from './lib/interceptors/response-transform.interceptor';
 import { ExceptionCause } from './lib/interfaces/exception.interface';
 import { exceptionErrorCode } from './lib/constants/exception';
+import { UnauthorizedAccessException } from './lib/exceptions/unauthorized-access.exception';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -20,8 +22,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // TODO: utilize log
     console.log('E', exception.getResponse());
 
-    const status = exception.getStatus();
+    if (exception instanceof UnauthorizedException && !exception.cause) {
+      exception = new UnauthorizedAccessException();
+    }
+
     const exceptionCause = exception.cause as ExceptionCause | undefined;
+    const status = exception.getStatus();
     const message = exception.message;
 
     const errorCode =
