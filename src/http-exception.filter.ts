@@ -16,11 +16,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const _request = ctx.getRequest<Request>();
-    const status = exception.getStatus();
-    const exceptionCause = exception.cause as ExceptionCause | undefined;
 
     // TODO: utilize log
     console.log('E', exception.getResponse());
+
+    const status = exception.getStatus();
+    const exceptionCause = exception.cause as ExceptionCause | undefined;
+    const message = exception.message;
 
     const errorCode =
       exceptionCause?.errorCode || exceptionErrorCode.GENERAL_ERROR;
@@ -30,7 +32,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
      */
     response.status(status).json({
       code: errorCode,
-      message: exception.message,
+      message: message,
       data: null,
       timestamp: new Date().getTime(),
       trace_id: 'TRACE_ID',

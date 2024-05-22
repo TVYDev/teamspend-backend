@@ -22,8 +22,6 @@ const ACCESS_TOKEN_COOKIE_OPTIONS: CookieOptions = {
   httpOnly: true,
   secure: true,
   sameSite: 'lax',
-  expires: new Date(Date.now() + 1000 * 60 * 10), // TODO: Get from Redis config 10mn
-  maxAge: 1000 * 60 * 10, // TODO: Get from Redis config 10mn
 };
 
 const REFRESH_TOKEN_COOKIE_OPTIONS: CookieOptions = {
@@ -88,7 +86,7 @@ export class AuthService {
 
     return {
       access_token: this.jwtService.sign(accessTokenPayload, {
-        expiresIn: 60 * 10, // TODO: Get from Redis config
+        expiresIn: 3, // TODO: Get from Redis config
       }),
       refresh_token: this.jwtService.sign(refreshTokenPayload, {
         expiresIn: 60 * 60 * 24 * 7, // TODO: Get from Redis config

@@ -26,7 +26,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       return false;
     }
 
-    // TODO: could do token revocation here
     const { password: _, ...result } = user;
     return result;
   }
