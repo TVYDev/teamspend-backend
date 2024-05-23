@@ -3,12 +3,12 @@ import { Request } from 'express';
 
 export interface AccessTokenJwtPayload {
   sub: string;
-  refreshTokenId: string;
+  sessionId: string;
 }
 
 export interface RefreshTokenJwtPayload {
   sub: string;
-  tokenId: string;
+  sessionId: string;
 }
 
 export interface NewJwtTokenResponse {

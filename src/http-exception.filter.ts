@@ -3,12 +3,14 @@ import {
   ExceptionFilter,
   HttpException,
   Catch,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 
 import { StandardResponse } from './lib/interceptors/response-transform.interceptor';
 import { ExceptionCause } from './lib/interfaces/exception.interface';
 import { exceptionErrorCode } from './lib/constants/exception';
+import { UnauthorizedAccessException } from './auth/exceptions/unauthorized-access.exception';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -16,11 +18,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const _request = ctx.getRequest<Request>();
-    const status = exception.getStatus();
-    const exceptionCause = exception.cause as ExceptionCause | undefined;
 
     // TODO: utilize log
     console.log('E', exception.getResponse());
+
+    if (exception instanceof UnauthorizedException && !exception.cause) {
+      exception = new UnauthorizedAccessException();
+    }
+
+    const exceptionCause = exception.cause as ExceptionCause | undefined;
+    const status = exception.getStatus();
+    const message = exception.message;
 
     const errorCode =
       exceptionCause?.errorCode || exceptionErrorCode.GENERAL_ERROR;
@@ -30,7 +38,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
      */
     response.status(status).json({
       code: errorCode,
-      message: exception.message,
+      message: message,
       data: null,
       timestamp: new Date().getTime(),
       trace_id: 'TRACE_ID',

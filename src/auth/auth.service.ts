@@ -3,26 +3,25 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { CookieOptions, Response } from 'express';
 
-import { User } from '@prisma/client';
+import { SessionType, User } from '@prisma/client';
 import { UsersService } from '@/users/users.service';
 import { CryptoService } from '@/crypto/crypto.service';
-import { IncorrectUserCredentialsException } from '@/lib/exceptions/incorrect-user-credentials.exception';
+import { SessionsService } from '@/sessions/sessions.service';
+import { IncorrectUserCredentialsException } from '@/auth/exceptions/incorrect-user-credentials.exception';
 import { InvalidRequestPayloadException } from '@/lib/exceptions/invalid-request-payload.exception';
-import { TokensService } from '@/tokens/tokens.service';
+import { DeviceInfo } from '@/lib/interfaces/request';
 import {
   AccessTokenJwtPayload,
   NewJwtTokenResponse,
   RefreshTokenJwtPayload,
 } from './auth.interface';
 import { SignUpDto } from './dto/sign-up.dto';
-import { authCookieName } from './constants';
+import { authCookieName, sessionConstants } from './constants';
 
 const ACCESS_TOKEN_COOKIE_OPTIONS: CookieOptions = {
   httpOnly: true,
   secure: true,
   sameSite: 'lax',
-  expires: new Date(Date.now() + 1000 * 60 * 10), // TODO: Get from Redis config 10mn
-  maxAge: 1000 * 60 * 10, // TODO: Get from Redis config 10mn
 };
 
 const REFRESH_TOKEN_COOKIE_OPTIONS: CookieOptions = {
@@ -39,7 +38,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private cryptoService: CryptoService,
-    private tokensService: TokensService
+    private sessionsService: SessionsService
   ) {}
 
   async validateUser(email: string, password: string) {
@@ -66,19 +65,23 @@ export class AuthService {
     return null;
   }
 
-  async login(user: User) {
-    const refreshTokenIdentity =
-      await this.tokensService.createRefreshToken(user);
+  async login(user: User, deviceInfo: DeviceInfo) {
+    const session = await this.sessionsService.createSession({
+      user_id: user.id,
+      type: SessionType.LOGIN,
+      expired_at: REFRESH_TOKEN_COOKIE_OPTIONS.expires || new Date(),
+      device_id: deviceInfo.deviceId,
+      device_name: deviceInfo.deviceName,
+    });
 
     const accessTokenPayload: AccessTokenJwtPayload = {
       sub: user.id,
-      /** Used for revoking refresh token upon logout */
-      refreshTokenId: refreshTokenIdentity.id,
+      sessionId: session.id,
     };
 
     const refreshTokenPayload: RefreshTokenJwtPayload = {
       sub: user.id,
-      tokenId: refreshTokenIdentity.id,
+      sessionId: session.id,
     };
 
     return {
@@ -136,5 +139,28 @@ export class AuthService {
       maxAge: 0,
       expires: new Date(Date.now()),
     });
+  }
+
+  async enforceNumberOfActiveSessionsOfUser(user: User) {
+    const countOfActiveSessions =
+      await this.sessionsService.countActiveSessionsOfUser(user);
+    const configuredAllowedNumberOfSessions =
+      sessionConstants.allowedNumberOfSessions < 1
+        ? -1
+        : sessionConstants.allowedNumberOfSessions;
+
+    if (
+      configuredAllowedNumberOfSessions === -1 ||
+      configuredAllowedNumberOfSessions > countOfActiveSessions
+    ) {
+      return;
+    }
+
+    const countActiveSessionsToBeRevoked =
+      countOfActiveSessions - configuredAllowedNumberOfSessions;
+    await this.sessionsService.revokeEarlierActiveSessionsOfUser(
+      user,
+      countActiveSessionsToBeRevoked
+    );
   }
 }
