@@ -7,7 +7,7 @@ import { SessionType, User } from '@prisma/client';
 import { UsersService } from '@/users/users.service';
 import { CryptoService } from '@/crypto/crypto.service';
 import { SessionsService } from '@/sessions/sessions.service';
-import { IncorrectUserCredentialsException } from '@/lib/exceptions/incorrect-user-credentials.exception';
+import { IncorrectUserCredentialsException } from '@/auth/exceptions/incorrect-user-credentials.exception';
 import { InvalidRequestPayloadException } from '@/lib/exceptions/invalid-request-payload.exception';
 import { DeviceInfo } from '@/lib/interfaces/request';
 import {

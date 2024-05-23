@@ -10,7 +10,7 @@ import { Response, Request } from 'express';
 import { StandardResponse } from './lib/interceptors/response-transform.interceptor';
 import { ExceptionCause } from './lib/interfaces/exception.interface';
 import { exceptionErrorCode } from './lib/constants/exception';
-import { UnauthorizedAccessException } from './lib/exceptions/unauthorized-access.exception';
+import { UnauthorizedAccessException } from './auth/exceptions/unauthorized-access.exception';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {

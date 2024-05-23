@@ -3,11 +3,11 @@ import { UnauthorizedException } from '@nestjs/common';
 import { exceptionErrorCode } from '@/lib/constants/exception';
 import { ExceptionCause } from '@/lib/interfaces/exception.interface';
 
-export class UnauthorizedAccessException extends UnauthorizedException {
+export class TokenExpiredException extends UnauthorizedException {
   constructor() {
-    super('Unauthorized Access', {
+    super('Token is expired', {
       cause: {
-        errorCode: exceptionErrorCode.UNAUTHORIZED_ACCESS,
+        errorCode: exceptionErrorCode.AUTH.EXPIRED_TOKEN,
       } as ExceptionCause,
     });
   }

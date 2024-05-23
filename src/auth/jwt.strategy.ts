@@ -4,7 +4,7 @@ import { ExtractJwt, Strategy, WithSecretOrKey } from 'passport-jwt';
 import { Request } from 'express';
 
 import { UsersService } from '@/users/users.service';
-import { UnauthorizedAccessException } from '@/lib/exceptions/unauthorized-access.exception';
+import { UnauthorizedAccessException } from './exceptions/unauthorized-access.exception';
 import { authCookieName, jwtConstants } from './constants';
 import { AccessTokenJwtPayload } from './auth.interface';
 

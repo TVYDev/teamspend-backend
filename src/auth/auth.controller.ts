@@ -28,6 +28,9 @@ import { Public } from './auth.decorator';
 import { SignUpDto } from './dto/sign-up.dto';
 import { RefreshTokenGuard } from './refresh-token.guard';
 import { authCookieName } from './constants';
+import { RevokeSessionDto } from './dto/revoke-session.dto';
+import { RestrictedSelfSessionRevocationException } from './exceptions/restricted-self-session-revocation.exception';
+import { NotFoundResourceException } from '@/lib/exceptions/not-found-resource.exception';
 
 @Controller('auth')
 export class AuthController {
@@ -143,5 +146,41 @@ export class AuthController {
     }
 
     this.authService.clearAuthCookie(res);
+  }
+
+  @Get('sessions')
+  @HttpCode(HttpStatus.OK)
+  sessions(@Req() req: AuthenticatedRequest) {
+    return this.sessionsService.findActiveSessionsOfUser(req.user);
+  }
+
+  @Post('sessions/revoke')
+  @HttpCode(HttpStatus.OK)
+  async revokeSession(
+    @Req() req: AuthenticatedRequest,
+    @Body() revokeSessionDto: RevokeSessionDto
+  ) {
+    const accessTokenJwt = req.cookies[authCookieName.ACCESS_TOKEN];
+    const decodedAccessTokenPayload =
+      this.jwtService.decode<AccessTokenJwtPayload>(accessTokenJwt);
+
+    if (decodedAccessTokenPayload.sessionId === revokeSessionDto.id) {
+      throw new RestrictedSelfSessionRevocationException();
+    }
+
+    const activeSession =
+      await this.sessionsService.findActiveSessionByIdAndType(
+        revokeSessionDto.id,
+        SessionType.LOGIN
+      );
+
+    if (!activeSession) {
+      throw new NotFoundResourceException();
+    }
+
+    await this.sessionsService.revokeSessionByIdAndUser(
+      revokeSessionDto.id,
+      req.user
+    );
   }
 }

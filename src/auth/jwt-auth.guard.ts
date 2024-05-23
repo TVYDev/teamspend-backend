@@ -6,9 +6,9 @@ import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 
 import { SessionType } from '@prisma/client';
 import { SessionsService } from '@/sessions/sessions.service';
-import { TokenExpiredException } from '@/lib/exceptions/token-expired.exception';
+import { TokenExpiredException } from '@/auth/exceptions/token-expired.exception';
 import { getDeviceInfoFromHeaders } from '@/lib/helpers/request';
-import { UnauthorizedAccessException } from '@/lib/exceptions/unauthorized-access.exception';
+import { UnauthorizedAccessException } from './exceptions/unauthorized-access.exception';
 import { IS_PUBLIC } from './auth.decorator';
 import { accessTokenJwtFromCookieOrAuthHeader } from './jwt.strategy';
 import { AccessTokenJwtPayload } from './auth.interface';
@@ -58,8 +58,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       if (error instanceof TokenExpiredError) {
         throw new TokenExpiredException();
       }
-
-      throw error;
     }
 
     return super.canActivate(context) as Promise<boolean>;

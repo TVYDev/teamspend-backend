@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { Session, SessionType, Status } from '@prisma/client';
+import { Session, SessionType, Status, User } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 
@@ -35,6 +35,23 @@ export class SessionsService {
     return this.prismaService.session.update({
       where: { id },
       data: { status: Status.INACTIVE },
+    });
+  }
+
+  revokeSessionByIdAndUser(id: string, user: User): Promise<Session> {
+    return this.prismaService.session.update({
+      where: { id, user__id: user.id },
+      data: { status: Status.INACTIVE },
+    });
+  }
+
+  findActiveSessionsOfUser(user: User): Promise<Session[]> {
+    return this.prismaService.session.findMany({
+      where: {
+        user__id: user.id,
+        status: Status.ACTIVE,
+        expired_at: { gte: new Date() },
+      },
     });
   }
 }

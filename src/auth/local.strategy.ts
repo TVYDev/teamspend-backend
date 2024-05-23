@@ -3,7 +3,7 @@ import { IStrategyOptions, Strategy } from 'passport-local';
 import { Injectable } from '@nestjs/common';
 
 import { AuthService } from './auth.service';
-import { IncorrectUserCredentialsException } from '@/lib/exceptions/incorrect-user-credentials.exception';
+import { IncorrectUserCredentialsException } from '@/auth/exceptions/incorrect-user-credentials.exception';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
