@@ -28,6 +28,28 @@ export class SessionsService {
         status: Status.ACTIVE,
         expired_at: { gte: new Date() },
       },
+      orderBy: { created_at: 'desc' },
+    });
+  }
+
+  findActiveSessionsOfUser(user: User): Promise<Session[]> {
+    return this.prismaService.session.findMany({
+      where: {
+        user__id: user.id,
+        status: Status.ACTIVE,
+        expired_at: { gte: new Date() },
+      },
+      orderBy: { created_at: 'desc' },
+    });
+  }
+
+  countActiveSessionsOfUser(user: User): Promise<number> {
+    return this.prismaService.session.count({
+      where: {
+        user__id: user.id,
+        status: Status.ACTIVE,
+        expired_at: { gte: new Date() },
+      },
     });
   }
 
@@ -45,13 +67,22 @@ export class SessionsService {
     });
   }
 
-  findActiveSessionsOfUser(user: User): Promise<Session[]> {
-    return this.prismaService.session.findMany({
+  async revokeEarlierActiveSessionsOfUser(user: User, count: number) {
+    const earlierActiveSessions = await this.prismaService.session.findMany({
       where: {
         user__id: user.id,
         status: Status.ACTIVE,
         expired_at: { gte: new Date() },
       },
+      orderBy: { created_at: 'asc' },
+      take: count,
+    });
+
+    await this.prismaService.session.updateMany({
+      where: {
+        id: { in: earlierActiveSessions.map((session) => session.id) },
+      },
+      data: { status: Status.INACTIVE },
     });
   }
 }

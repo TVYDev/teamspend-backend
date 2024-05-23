@@ -16,7 +16,7 @@ import {
   RefreshTokenJwtPayload,
 } from './auth.interface';
 import { SignUpDto } from './dto/sign-up.dto';
-import { authCookieName } from './constants';
+import { authCookieName, sessionConstants } from './constants';
 
 const ACCESS_TOKEN_COOKIE_OPTIONS: CookieOptions = {
   httpOnly: true,
@@ -139,5 +139,28 @@ export class AuthService {
       maxAge: 0,
       expires: new Date(Date.now()),
     });
+  }
+
+  async enforceNumberOfActiveSessionsOfUser(user: User) {
+    const countOfActiveSessions =
+      await this.sessionsService.countActiveSessionsOfUser(user);
+    const configuredAllowedNumberOfSessions =
+      sessionConstants.allowedNumberOfSessions < 1
+        ? -1
+        : sessionConstants.allowedNumberOfSessions;
+
+    if (
+      configuredAllowedNumberOfSessions === -1 ||
+      configuredAllowedNumberOfSessions > countOfActiveSessions
+    ) {
+      return;
+    }
+
+    const countActiveSessionsToBeRevoked =
+      countOfActiveSessions - configuredAllowedNumberOfSessions;
+    await this.sessionsService.revokeEarlierActiveSessionsOfUser(
+      user,
+      countActiveSessionsToBeRevoked
+    );
   }
 }

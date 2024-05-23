@@ -51,6 +51,7 @@ export class AuthController {
   ) {
     const deviceInfo = getDeviceInfoFromHeaders(req.headers);
     const resultLoginData = await this.authService.login(req.user, deviceInfo);
+    await this.authService.enforceNumberOfActiveSessionsOfUser(req.user);
 
     this.authService.setAuthCookie(res, resultLoginData);
 
