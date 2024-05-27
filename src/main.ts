@@ -4,16 +4,48 @@ import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { useContainer } from 'class-validator';
+import { WinstonModule } from 'nest-winston';
+import { transports, format } from 'winston';
+import { ecsFormat } from '@elastic/ecs-winston-format';
+import 'winston-daily-rotate-file';
 
 import { AppModule } from './app.module';
-import { logger } from './logger.middleware';
 import { IS_USER_ALREADY_EXIST_CONSTRAINT_NAME } from './users/decorators/is-user-already-exist.decorator';
 import { InvalidRequestPayloadException } from './lib/exceptions/invalid-request-payload.exception';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: WinstonModule.createLogger({
+      transports: [
+        new transports.DailyRotateFile({
+          filename: 'logs/%DATE%-error.log',
+          level: 'error',
+          format: ecsFormat(),
+          datePattern: 'YYYY-MM-DD',
+          zippedArchive: false,
+          maxFiles: '30d',
+        }),
+        new transports.DailyRotateFile({
+          filename: 'logs/%DATE%-combined.log',
+          format: ecsFormat(),
+          datePattern: 'YYYY-MM-DD',
+          zippedArchive: false,
+          maxFiles: '30d',
+        }),
+        new transports.Console({
+          format: format.combine(
+            format.cli(),
+            format.splat(),
+            format.timestamp(),
+            format.printf(
+              (info) => `${info.timestamp} ${info.level}: ${info.message}`
+            )
+          ),
+        }),
+      ],
+    }),
+  });
 
-  app.use(logger);
   app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
