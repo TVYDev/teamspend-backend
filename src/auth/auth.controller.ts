@@ -12,6 +12,7 @@ import {
 import { Response, Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { SessionType } from '@prisma/client';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { SessionsService } from '@/sessions/sessions.service';
 import { ForbiddenResourceException } from '@/lib/exceptions/forbidden-resource.exception';
@@ -32,6 +33,7 @@ import { RevokeSessionDto } from './dto/revoke-session.dto';
 import { RestrictedSelfSessionRevocationException } from './exceptions/restricted-self-session-revocation.exception';
 import { NotFoundResourceException } from '@/lib/exceptions/not-found-resource.exception';
 
+@ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
   constructor(
@@ -59,6 +61,11 @@ export class AuthController {
     return returnedResultLoginData;
   }
 
+  @ApiOperation({ summary: 'Sign up' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The user has signed up successfully',
+  })
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('sign-up')
