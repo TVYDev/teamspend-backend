@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { useContainer } from 'class-validator';
 import { WinstonModule } from 'nest-winston';
 import { transports, format } from 'winston';
@@ -66,10 +66,10 @@ async function bootstrap() {
     })
   );
 
-  /**
-   * To allow custome decorators inject services into it
-   */
-  useContainer(app.select(AppModule), { fallbackOnErrors: true });
+  app.setGlobalPrefix('api');
+  app.enableVersioning({
+    type: VersioningType.URI,
+  });
 
   // TODO: CORS
   // app.enableCors({
@@ -77,6 +77,11 @@ async function bootstrap() {
   //   origin: '',
   //   credentials: true,
   // });
+
+  /**
+   * To allow custom decorators inject services into it
+   */
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') || 3000;

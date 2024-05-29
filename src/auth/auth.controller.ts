@@ -32,7 +32,7 @@ import { RevokeSessionDto } from './dto/revoke-session.dto';
 import { RestrictedSelfSessionRevocationException } from './exceptions/restricted-self-session-revocation.exception';
 import { NotFoundResourceException } from '@/lib/exceptions/not-found-resource.exception';
 
-@Controller('auth')
+@Controller({ path: 'auth', version: '1' })
 export class AuthController {
   constructor(
     private authService: AuthService,
