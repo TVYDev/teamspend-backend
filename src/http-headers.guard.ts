@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { Request } from 'express';
 
 import { requiredCustomHeader } from '@/lib/constants/request';
@@ -6,6 +11,8 @@ import { UnauthorizedAccessException } from '@/auth/exceptions/unauthorized-acce
 
 @Injectable()
 export class HttpHeaderGuard implements CanActivate {
+  private readonly logger = new Logger(HttpHeaderGuard.name);
+
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest<Request>();
     const headers = request.headers;
@@ -15,7 +22,7 @@ export class HttpHeaderGuard implements CanActivate {
         (header) => header in headers && headers[header] !== ''
       )
     ) {
-      //TODO: add logging
+      this.logger.error('Missing required header');
       throw new UnauthorizedAccessException();
     }
 

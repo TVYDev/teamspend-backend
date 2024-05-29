@@ -4,8 +4,10 @@ import {
   HttpException,
   Catch,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 
 import { StandardResponse } from './lib/interceptors/response-transform.interceptor';
 import { ExceptionCause } from './lib/interfaces/exception.interface';
@@ -14,13 +16,14 @@ import { UnauthorizedAccessException } from './auth/exceptions/unauthorized-acce
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
+
   catch(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const _request = ctx.getRequest<Request>();
 
-    // TODO: utilize log
-    console.log('E', exception.getResponse());
+    const traceId = uuidv4().replaceAll('-', '');
 
     if (exception instanceof UnauthorizedException && !exception.cause) {
       exception = new UnauthorizedAccessException();
@@ -33,15 +36,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const errorCode =
       exceptionCause?.errorCode || exceptionErrorCode.GENERAL_ERROR;
 
-    /**
-     * TODO: Dynamic code and trace_id
-     */
-    response.status(status).json({
+    const standartErrorResponse: StandardResponse<null> = {
       code: errorCode,
       message: message,
       data: null,
       timestamp: new Date().getTime(),
-      trace_id: 'TRACE_ID',
-    } satisfies StandardResponse<null>);
+      /**
+       * TODO: trace_id is not fully traceable for a complete request
+       */
+      trace_id: traceId,
+    };
+
+    this.logger.error(standartErrorResponse, exception.stack);
+
+    response.status(status).json(standartErrorResponse);
   }
 }
