@@ -3,8 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
 
 import { AuthModule } from '@/auth/auth.module';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { HttpExceptionFilter } from './http-exception.filter';
 import { ResponseTransformInterceptor } from './lib/interceptors/response-transform.interceptor';
 import { TimeoutInterceptor } from './lib/interceptors/timeout.interceptor';
@@ -31,9 +29,7 @@ import { RequestLoggerMiddleware } from './request-logger.middleware';
     }),
     AuthModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     {
       provide: 'APP_FILTER',
       useClass: HttpExceptionFilter,

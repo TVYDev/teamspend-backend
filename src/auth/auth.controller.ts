@@ -12,11 +12,12 @@ import {
 import { Response, Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { SessionType } from '@prisma/client';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { SessionsService } from '@/sessions/sessions.service';
 import { ForbiddenResourceException } from '@/lib/exceptions/forbidden-resource.exception';
 import { getDeviceInfoFromHeaders } from '@/lib/helpers/request';
+import { NotFoundResourceException } from '@/lib/exceptions/not-found-resource.exception';
 import { UsersService } from '@/users/users.service';
 import { AuthService } from './auth.service';
 import {
@@ -31,7 +32,7 @@ import { RefreshTokenGuard } from './refresh-token.guard';
 import { authCookieName } from './constants';
 import { RevokeSessionDto } from './dto/revoke-session.dto';
 import { RestrictedSelfSessionRevocationException } from './exceptions/restricted-self-session-revocation.exception';
-import { NotFoundResourceException } from '@/lib/exceptions/not-found-resource.exception';
+import { LogInDto } from './dto/log-in.dto';
 
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
@@ -43,6 +44,12 @@ export class AuthController {
     private usersService: UsersService
   ) {}
 
+  @ApiOperation({ summary: 'Log in' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The user has logged in successfully',
+  })
+  @ApiBody({ type: LogInDto })
   @Public()
   @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -87,11 +94,21 @@ export class AuthController {
     return returnedResultLoginData;
   }
 
+  @ApiOperation({ summary: 'Get profile information of the current user' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The user profile has been successfully retrieved',
+  })
   @Get('profile')
   getProfile(@Req() req: AuthenticatedRequest) {
     return req.user || null;
   }
 
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The access token has been successfully refreshed',
+  })
   @Public()
   @UseGuards(RefreshTokenGuard)
   @Post('token/refresh')
@@ -137,6 +154,11 @@ export class AuthController {
     throw new ForbiddenResourceException();
   }
 
+  @ApiOperation({ summary: 'Log out' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The user has logged out successfully',
+  })
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(
@@ -156,12 +178,22 @@ export class AuthController {
     this.authService.clearAuthCookie(res);
   }
 
+  @ApiOperation({ summary: 'Get all active sessions of the current user' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The user sessions have been successfully retrieved',
+  })
   @Get('sessions')
   @HttpCode(HttpStatus.OK)
   sessions(@Req() req: AuthenticatedRequest) {
     return this.sessionsService.findActiveSessionsOfUser(req.user);
   }
 
+  @ApiOperation({ summary: 'Revoke a session of the current user' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The user session has been successfully revoked',
+  })
   @Post('sessions/revoke')
   @HttpCode(HttpStatus.OK)
   async revokeSession(
