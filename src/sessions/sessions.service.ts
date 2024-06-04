@@ -67,6 +67,13 @@ export class SessionsService {
     });
   }
 
+  revokeAllSessionsOfUser(user: User) {
+    return this.prismaService.session.updateMany({
+      where: { user__id: user.id },
+      data: { status: Status.INACTIVE },
+    });
+  }
+
   async revokeEarlierActiveSessionsOfUser(user: User, count: number) {
     const earlierActiveSessions = await this.prismaService.session.findMany({
       where: {

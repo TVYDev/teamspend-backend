@@ -51,13 +51,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         SessionType.LOGIN
       );
 
-      if (deviceInfo.deviceId !== session?.device_id) {
+      if (!session || (session && deviceInfo.deviceId !== session.device_id)) {
         throw new UnauthorizedAccessException();
       }
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         throw new TokenExpiredException();
       }
+
+      throw error;
     }
 
     return super.canActivate(context) as Promise<boolean>;
