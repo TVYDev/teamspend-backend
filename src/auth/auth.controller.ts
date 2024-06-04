@@ -13,12 +13,15 @@ import { Response, Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { SessionType } from '@prisma/client';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import * as bcrypt from 'bcrypt';
 
 import { SessionsService } from '@/sessions/sessions.service';
 import { ForbiddenResourceException } from '@/lib/exceptions/forbidden-resource.exception';
 import { getDeviceInfoFromHeaders } from '@/lib/helpers/request';
 import { NotFoundResourceException } from '@/lib/exceptions/not-found-resource.exception';
 import { UsersService } from '@/users/users.service';
+import { CryptoService } from '@/crypto/crypto.service';
+import { InvalidRequestPayloadException } from '@/lib/exceptions/invalid-request-payload.exception';
 import { AuthService } from './auth.service';
 import {
   AccessTokenJwtPayload,
@@ -33,6 +36,7 @@ import { authCookieName } from './constants';
 import { RevokeSessionDto } from './dto/revoke-session.dto';
 import { RestrictedSelfSessionRevocationException } from './exceptions/restricted-self-session-revocation.exception';
 import { LogInDto } from './dto/log-in.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
@@ -41,9 +45,13 @@ export class AuthController {
     private authService: AuthService,
     private jwtService: JwtService,
     private sessionsService: SessionsService,
-    private usersService: UsersService
+    private usersService: UsersService,
+    private cryptoService: CryptoService
   ) {}
 
+  /**
+   * LOG IN
+   */
   @ApiOperation({ summary: 'Log in' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -68,6 +76,9 @@ export class AuthController {
     return returnedResultLoginData;
   }
 
+  /**
+   * SIGN UP
+   */
   @ApiOperation({ summary: 'Sign up' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -94,6 +105,9 @@ export class AuthController {
     return returnedResultLoginData;
   }
 
+  /**
+   * GET PROFILE
+   */
   @ApiOperation({ summary: 'Get profile information of the current user' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -101,9 +115,13 @@ export class AuthController {
   })
   @Get('profile')
   getProfile(@Req() req: AuthenticatedRequest) {
+    return this.cryptoService.encryptRsa('qwe345');
     return req.user || null;
   }
 
+  /**
+   * REFRESH TOKEN
+   */
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -154,6 +172,9 @@ export class AuthController {
     throw new ForbiddenResourceException();
   }
 
+  /**
+   * LOG OUT
+   */
   @ApiOperation({ summary: 'Log out' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -178,6 +199,9 @@ export class AuthController {
     this.authService.clearAuthCookie(res);
   }
 
+  /**
+   * GET SESSIONS
+   */
   @ApiOperation({ summary: 'Get all active sessions of the current user' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -189,6 +213,9 @@ export class AuthController {
     return this.sessionsService.findActiveSessionsOfUser(req.user);
   }
 
+  /**
+   * REVOKE SESSION
+   */
   @ApiOperation({ summary: 'Revoke a session of the current user' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -222,5 +249,52 @@ export class AuthController {
       revokeSessionDto.id,
       req.user
     );
+  }
+
+  /**
+   * CHANGE PASSWORD
+   */
+  @ApiOperation({ summary: 'Change password' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The user password has been successfully changed',
+  })
+  @Post('password/change')
+  @HttpCode(HttpStatus.OK)
+  async changePassword(
+    @Req() req: AuthenticatedRequest,
+    @Body() changePasswordDto: ChangePasswordDto
+  ) {
+    let decryptedOldPassword = '';
+    let decryptedNewPassword = '';
+    try {
+      decryptedOldPassword = this.cryptoService.decryptRsa(
+        changePasswordDto.old_password
+      );
+      decryptedNewPassword = this.cryptoService.decryptRsa(
+        changePasswordDto.new_password
+      );
+    } catch {
+      throw new InvalidRequestPayloadException();
+    }
+
+    const isNewAndOldPasswordTheSame =
+      decryptedOldPassword === decryptedNewPassword;
+    if (isNewAndOldPasswordTheSame) {
+      throw new InvalidRequestPayloadException(
+        'New password is the same as old password'
+      );
+    }
+
+    const user = await this.usersService.findActiveUserById(req.user.id);
+    const isOldPasswordCorrect =
+      user && (await bcrypt.compare(decryptedOldPassword, user.password));
+    if (!isOldPasswordCorrect) {
+      throw new InvalidRequestPayloadException('Old password is incorrect');
+    }
+
+    await this.usersService.changePassword(req.user, decryptedNewPassword);
+
+    await this.sessionsService.revokeAllSessionsOfUser(req.user);
   }
 }
