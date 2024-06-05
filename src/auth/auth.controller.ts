@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -12,7 +13,13 @@ import {
 import { Response, Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { SessionType } from '@prisma/client';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import * as bcrypt from 'bcrypt';
 
 import { SessionsService } from '@/sessions/sessions.service';
@@ -37,6 +44,8 @@ import { RevokeSessionDto } from './dto/revoke-session.dto';
 import { RestrictedSelfSessionRevocationException } from './exceptions/restricted-self-session-revocation.exception';
 import { LogInDto } from './dto/log-in.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
@@ -113,9 +122,9 @@ export class AuthController {
     status: HttpStatus.OK,
     description: 'The user profile has been successfully retrieved',
   })
+  @ApiBearerAuth()
   @Get('profile')
   getProfile(@Req() req: AuthenticatedRequest) {
-    return this.cryptoService.encryptRsa('qwe345');
     return req.user || null;
   }
 
@@ -180,6 +189,7 @@ export class AuthController {
     status: HttpStatus.OK,
     description: 'The user has logged out successfully',
   })
+  @ApiBearerAuth()
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(
@@ -207,6 +217,7 @@ export class AuthController {
     status: HttpStatus.OK,
     description: 'The user sessions have been successfully retrieved',
   })
+  @ApiBearerAuth()
   @Get('sessions')
   @HttpCode(HttpStatus.OK)
   sessions(@Req() req: AuthenticatedRequest) {
@@ -221,6 +232,7 @@ export class AuthController {
     status: HttpStatus.OK,
     description: 'The user session has been successfully revoked',
   })
+  @ApiBearerAuth()
   @Post('sessions/revoke')
   @HttpCode(HttpStatus.OK)
   async revokeSession(
@@ -259,6 +271,7 @@ export class AuthController {
     status: HttpStatus.OK,
     description: 'The user password has been successfully changed',
   })
+  @ApiBearerAuth()
   @Post('password/change')
   @HttpCode(HttpStatus.OK)
   async changePassword(
@@ -296,5 +309,87 @@ export class AuthController {
     await this.usersService.changePassword(req.user, decryptedNewPassword);
 
     await this.sessionsService.revokeAllSessionsOfUser(req.user);
+  }
+
+  /**
+   * FORGOT PASSWORD
+   */
+  @ApiOperation({ summary: 'Forgot password' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description:
+      'The user has been successfully notified about the password reset',
+  })
+  @Public()
+  @Post('password/forgot')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    const user = await this.usersService.findActiveUserByEmail(
+      forgotPasswordDto.email
+    );
+
+    if (user) {
+      const _resetPasswordSession = await this.sessionsService.createSession({
+        user_id: user.id,
+        type: SessionType.RESET_PWD,
+        expired_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3), // TODO: Refactor this static 3 days
+      });
+
+      // TODO: Send email with reset password link
+    }
+  }
+
+  /**
+   * RESET PASSWORD
+   */
+  @ApiOperation({ summary: 'Reset password' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The user password has been successfully reset',
+  })
+  @Public()
+  @Post('password/reset')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+    @Query('token') token: string
+  ) {
+    const tokenInvalidException = new InvalidRequestPayloadException(
+      'Token is invalid'
+    );
+
+    if (!token) {
+      throw tokenInvalidException;
+    }
+
+    const resetPasswordSession =
+      await this.sessionsService.findActiveSessionByIdAndType(
+        token,
+        SessionType.RESET_PWD
+      );
+    if (!resetPasswordSession) {
+      throw tokenInvalidException;
+    }
+
+    let decryptedNewPassword = '';
+    try {
+      decryptedNewPassword = this.cryptoService.decryptRsa(
+        resetPasswordDto.new_password
+      );
+    } catch {
+      throw new InvalidRequestPayloadException();
+    }
+
+    const user = await this.usersService.findActiveUserById(
+      resetPasswordSession.user__id
+    );
+
+    if (!user) {
+      throw tokenInvalidException;
+    }
+
+    await this.usersService.changePassword(user, decryptedNewPassword);
+
+    await this.sessionsService.revokeSessionById(resetPasswordSession.id);
   }
 }

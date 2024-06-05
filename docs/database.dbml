@@ -26,25 +26,6 @@ Table users {
   Note: "Contains user information"
 }
 
-Table tokens {
-  id varchar(255) [pk, note: 'uuid']
-  subject_id varchar(255) [not null]
-  type varchar(255) [not null, note: '''
-    Available values: 
-    - REFRESH_TOKEN
-    ''']
-  status varchar(255) [not null, default: 'active', note: '''
-    Available values: 
-    - ACTIVE
-    - INACTIVE
-    - DELETED
-    ''']
-  created_at timestamp [not null, default: 'now()']
-  last_modified_at timestamp
-
-  Note: "Contains token information"
-}
-
 Ref: users.id < sessions.user__id
 Table sessions {
   id varchar(255) [pk, note: 'uuid']
