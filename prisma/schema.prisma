@@ -33,17 +33,6 @@ enum TokenType {
   REFRESH_TOKEN
 }
 
-model Token {
-  id               String    @id @default(uuid()) @db.VarChar(255)
-  subject_id       String    @db.VarChar(255)
-  type             TokenType
-  status           Status    @default(ACTIVE)
-  created_at       DateTime  @default(now())
-  last_modified_at DateTime  @updatedAt
-
-  @@map("tokens")
-}
-
 enum SessionType {
   LOGIN
   RESET_PWD
