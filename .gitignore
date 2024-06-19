@@ -36,3 +36,7 @@ lerna-debug.log*
 
 # Environment variables
 .env
+.env.sit
+
+# Data
+teamspend-data
